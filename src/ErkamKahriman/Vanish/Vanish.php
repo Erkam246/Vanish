@@ -13,52 +13,57 @@ use pocketmine\command\CommandSender;
 
 class Vanish extends PluginBase implements Listener {
 
-    const PREFIX = C::BLUE . "Vanish" . C::GRAY . " -> " . C::RESET;
+    const PREFIX = C::BLUE."Vanish".C::DARK_GRAY." > ".C::RESET;
 
     public $vanish = array();
 
-    public function onEnable() {
-        $this->getServer()->getScheduler()->scheduleRepeatingTask(new VanishTask($this), 20);
+    /** @var Vanish */
+    public static $instance;
+
+    public function onEnable(){
+        self::$instance = $this;
+        $this->getScheduler()->scheduleRepeatingTask(new VanishTask(), 20);
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        $this->getLogger()->info(C::GREEN . "Aktiviert.");
     }
 
-    public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args) : bool {
+    public static function getInstance() : Vanish{
+        return self::$instance;
+    }
+
+    public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args): bool{
         $name = $sender->getName();
-        if ($cmd->getName() == "vanish") {
-            if ($sender instanceof Player) {
-                if ($sender->hasPermission("vanish.use")) {
-                    if ($this->vanish[$name] == false) {
+        if($cmd->getName() == "vanish"){
+            if($sender instanceof Player){
+                if($sender->hasPermission("vanish.use")){
+                    if($this->vanish[$name] == false){
                         $this->vanish[$name] = true;
-                        $sender->sendMessage(self::PREFIX . C::GREEN . "You are now vanished.");
-                    } else {
+                        $sender->sendMessage(self::PREFIX.C::GREEN."You are now vanished.");
+                    } else{
                         $this->vanish[$name] = false;
-                        foreach ($this->getServer()->getOnlinePlayers() as $players){
+                        foreach($this->getServer()->getOnlinePlayers() as $players){
                             $players->showPlayer($sender);
                         }
-                        $sender->sendMessage(self::PREFIX . C::RED . "You are no longer vanished!");
+                        $sender->sendMessage(self::PREFIX.C::RED."You are no longer vanished!");
                     }
                 }
-            } else {
-                $sender->sendMessage(self::PREFIX . C::YELLOW . "You need to be a Player.");
             }
         }
-        return false;
+        return true;
     }
 
-    public function onLogin(PlayerLoginEvent $event) {
+    public function onLogin(PlayerLoginEvent $event){
         $player = $event->getPlayer();
         $name = $player->getName();
-        if (!isset($this->vanish[$name])) $this->vanish[$name] = false;
+        if(!isset($this->vanish[$name])) $this->vanish[$name] = false;
     }
 
-    public function onQuit(PlayerQuitEvent $event) {
+    public function onQuit(PlayerQuitEvent $event){
         $player = $event->getPlayer();
         $name = $player->getName();
-        if ($this->vanish[$name] == true) $this->vanish[$name] = false;
+        if($this->vanish[$name] == true) $this->vanish[$name] = false;
     }
 
-    public function onDisable() {
-        $this->getLogger()->info(C::RED . "Deaktiviert.");
+    public function onDisable(){
+        $this->getLogger()->info(C::RED."Deaktiviert.");
     }
 }
